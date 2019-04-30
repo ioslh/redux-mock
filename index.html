@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>REDUX DEMO</title>
+</head>
+<body>
+  <script src="//unpkg.com/react@16.8.6/umd/react.production.min.js"></script>
+  <script src="//unpkg.com/react-dom@16.8.6/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <div id="app"></div>
+  <script>
+    ReduxMock: {
+      const createStore = (reducer, initialState = {}) => {
+        let state = initialState
+        const subscribers = []
+        const getState = () =>  state
+        const subscribe = listener => {
+          const index = subscribers.indexOf(listener)
+          if (index === -1) {
+            subscribers.push(listener)
+            listener(state)
+          }
+          return () => {
+            const index = subscribers.indexOf(listener)
+            if (index !== -1) {
+              subscribers.splice(index, 1)
+            }
+          }
+        }
+        const dispatch = action => {
+          state = reducer(state, action)
+          subscribers.forEach(listener => {
+            listener(state)
+          })
+        }
+        return {
+          getState,
+          subscribe,
+          dispatch,
+        }
+      }
+
+      window.Redux = {
+        createStore,
+      }
+    }
+  </script>
+
+  <script type="text/babel" data-preset="react">
+    const reducer = (state, action) => {
+      const { type, payload } = action
+      switch(type) {
+        case 'INC':
+          return { ...state, value: state.value + payload }
+        case 'DEC':
+          return { ...state, value: state.value - payload }
+        default:
+          return { ...state }
+      }
+    }
+    const initState = {
+      value: 10
+    }
+    const store = window.Redux.createStore(reducer, initState)
+
+    const increment = () => {
+      store.dispatch({
+        type: 'INC',
+        payload: 1
+      })
+    }
+    const decrement = () => {
+      store.dispatch({
+        type: 'DEC',
+        payload: 1
+      })
+    }
+
+    const listener = state => {
+      ReactDOM.render(
+        <div>
+            <h2>Extremely simple redux demo</h2>
+            <p>Current Value: { state.value }</p>
+            <button onClick={increment}>INCREMENT</button>
+            <button onClick={decrement}>DECREMENT</button>
+        </div>,
+        document.querySelector('#app')
+      )
+    }
+
+    store.subscribe(listener)
+  </script>
+</body>
+</html>
